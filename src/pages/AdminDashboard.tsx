@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import Breadcrumb from "@/components/Breadcrumb";
 import { libraryItems as initialItems, categories as initialCategories, LibraryItem, Category } from "@/data/library-data";
-import { Plus, Pencil, Trash2, Eye, BookOpen, FolderTree, ChevronRight, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, BookOpen, FolderTree, X, ChevronDown, ChevronRight, Table, Bold, Italic, List, ListOrdered, Link, Unlink, Image, ArrowDown } from "lucide-react";
 
 const AdminDashboard = () => {
   const [books, setBooks] = useState<LibraryItem[]>(initialItems);
@@ -12,30 +11,45 @@ const AdminDashboard = () => {
   const [editingBook, setEditingBook] = useState<LibraryItem | null>(null);
   const [viewingBook, setViewingBook] = useState<LibraryItem | null>(null);
 
-  // Form state
-  const [formTitle, setFormTitle] = useState("");
-  const [formDescription, setFormDescription] = useState("");
+  // Book form state
+  const [formName, setFormName] = useState("");
+  const [formSource, setFormSource] = useState("");
+  const [formLinkTitle, setFormLinkTitle] = useState("");
+  const [formLink, setFormLink] = useState("");
+  const [formContent, setFormContent] = useState("");
   const [formAuthors, setFormAuthors] = useState("");
-  const [formUrl, setFormUrl] = useState("");
   const [formCategoryId, setFormCategoryId] = useState("");
+  const [contentExpanded, setContentExpanded] = useState(true);
+
+  // Category form state
+  const [showCatForm, setShowCatForm] = useState(false);
+  const [editingCat, setEditingCat] = useState<{ id: string; name: string } | null>(null);
+  const [catFormName, setCatFormName] = useState("");
+  const [catFormParentId, setCatFormParentId] = useState<string | null>(null);
 
   const openAddForm = () => {
     setEditingBook(null);
-    setFormTitle("");
-    setFormDescription("");
+    setFormName("");
+    setFormSource("");
+    setFormLinkTitle("");
+    setFormLink("");
+    setFormContent("");
     setFormAuthors("");
-    setFormUrl("");
     setFormCategoryId("");
+    setContentExpanded(true);
     setShowForm(true);
   };
 
   const openEditForm = (book: LibraryItem) => {
     setEditingBook(book);
-    setFormTitle(book.title);
-    setFormDescription(book.description);
+    setFormName(book.title);
+    setFormSource(book.source);
+    setFormLinkTitle(book.linkTitle);
+    setFormLink(book.url);
+    setFormContent(book.content);
     setFormAuthors(book.authors);
-    setFormUrl(book.url);
     setFormCategoryId(book.categoryId);
+    setContentExpanded(true);
     setShowForm(true);
   };
 
@@ -43,16 +57,19 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (editingBook) {
       setBooks(books.map(b => b.id === editingBook.id ? {
-        ...b, title: formTitle, description: formDescription, authors: formAuthors, url: formUrl, categoryId: formCategoryId
+        ...b, title: formName, source: formSource, linkTitle: formLinkTitle, url: formLink, content: formContent, authors: formAuthors, categoryId: formCategoryId
       } : b));
     } else {
       setBooks([...books, {
         id: `book_${Date.now()}`,
-        title: formTitle,
-        description: formDescription,
+        title: formName,
+        source: formSource,
+        linkTitle: formLinkTitle,
+        url: formLink,
+        content: formContent,
         authors: formAuthors,
-        url: formUrl,
         categoryId: formCategoryId,
+        description: "",
       }]);
     }
     setShowForm(false);
@@ -77,34 +94,51 @@ const AdminDashboard = () => {
   const getCategoryName = (id: string) => flattenCategories(cats).find(c => c.id === id)?.name || "—";
 
   // Category CRUD
-  const handleAddMainCategory = () => {
-    const name = prompt("Nom de la catégorie principale :");
-    if (!name) return;
-    setCats([...cats, { id: `main_${Date.now()}`, name, count: 0 }]);
+  const openAddMainCategory = () => {
+    setEditingCat(null);
+    setCatFormName("");
+    setCatFormParentId(null);
+    setShowCatForm(true);
   };
 
-  const handleAddSubCategory = (parentId: string) => {
-    const name = prompt("Nom de la sous-catégorie :");
-    if (!name) return;
-    const addTo = (list: Category[]): Category[] =>
-      list.map(c => {
-        if (c.id === parentId) {
-          return { ...c, children: [...(c.children || []), { id: `sub_${Date.now()}`, name, count: 0 }] };
-        }
-        return { ...c, children: c.children ? addTo(c.children) : undefined };
-      });
-    setCats(addTo(cats));
+  const openAddSubCategory = (parentId: string) => {
+    setEditingCat(null);
+    setCatFormName("");
+    setCatFormParentId(parentId);
+    setShowCatForm(true);
   };
 
-  const handleEditCategory = (id: string) => {
-    const name = prompt("Nouveau nom :");
-    if (!name) return;
-    const editIn = (list: Category[]): Category[] =>
-      list.map(c => {
-        if (c.id === id) return { ...c, name };
-        return { ...c, children: c.children ? editIn(c.children) : undefined };
-      });
-    setCats(editIn(cats));
+  const openEditCategory = (id: string, name: string) => {
+    setEditingCat({ id, name });
+    setCatFormName(name);
+    setCatFormParentId(null);
+    setShowCatForm(true);
+  };
+
+  const handleSaveCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catFormName.trim()) return;
+
+    if (editingCat) {
+      const editIn = (list: Category[]): Category[] =>
+        list.map(c => {
+          if (c.id === editingCat.id) return { ...c, name: catFormName };
+          return { ...c, children: c.children ? editIn(c.children) : undefined };
+        });
+      setCats(editIn(cats));
+    } else if (catFormParentId) {
+      const addTo = (list: Category[]): Category[] =>
+        list.map(c => {
+          if (c.id === catFormParentId) {
+            return { ...c, children: [...(c.children || []), { id: `sub_${Date.now()}`, name: catFormName, count: 0 }] };
+          }
+          return { ...c, children: c.children ? addTo(c.children) : undefined };
+        });
+      setCats(addTo(cats));
+    } else {
+      setCats([...cats, { id: `main_${Date.now()}`, name: catFormName, count: 0 }]);
+    }
+    setShowCatForm(false);
   };
 
   const handleDeleteCategory = (id: string) => {
@@ -116,23 +150,23 @@ const AdminDashboard = () => {
     setCats(removeById(cats));
   };
 
+  // Categories tree like CategoriesPage
   const renderCategoryTree = (items: Category[], depth = 0) => (
-    <ul className={depth > 0 ? "ml-6 border-l border-border pl-4" : ""}>
+    <ul className={depth > 0 ? "ml-6" : ""}>
       {items.map(cat => (
-        <li key={cat.id} className="my-2">
-          <div className="flex items-center gap-3 group">
-            <FolderTree className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-foreground text-sm font-medium flex-1">{cat.name} ({cat.count})</span>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => handleAddSubCategory(cat.id)} className="text-link text-xs hover:underline px-1">+ sous-cat.</button>
-              <button onClick={() => handleEditCategory(cat.id)} className="p-1 hover:bg-muted rounded">
-                <Pencil className="w-3 h-3 text-muted-foreground" />
-              </button>
-              <button onClick={() => handleDeleteCategory(cat.id)} className="p-1 hover:bg-destructive/10 rounded">
-                <Trash2 className="w-3 h-3 text-destructive" />
-              </button>
-            </div>
+        <li key={cat.id} className="my-1">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-foreground">
+              {depth > 0 && "• "}
+              {cat.name} ({cat.count})
+            </span>
+            <button onClick={() => openEditCategory(cat.id, cat.name)} className="text-link text-xs hover:underline">edit</button>
+            <span className="text-muted-foreground">|</span>
+            <button onClick={() => handleDeleteCategory(cat.id)} className="text-link text-xs hover:underline">delete</button>
           </div>
+          <button onClick={() => openAddSubCategory(cat.id)} className="text-link text-xs ml-4 hover:underline">
+            add category here
+          </button>
           {cat.children && renderCategoryTree(cat.children, depth + 1)}
         </li>
       ))}
@@ -173,10 +207,7 @@ const AdminDashboard = () => {
         <>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Liste des livres</h2>
-            <button
-              onClick={openAddForm}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 text-sm hover:opacity-90 rounded"
-            >
+            <button onClick={openAddForm} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 text-sm hover:opacity-90 rounded">
               <Plus className="w-4 h-4" /> Ajouter un livre
             </button>
           </div>
@@ -235,24 +266,51 @@ const AdminDashboard = () => {
         <>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Gestion des catégories</h2>
-            <button
-              onClick={handleAddMainCategory}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 text-sm hover:opacity-90 rounded"
-            >
-              <Plus className="w-4 h-4" /> Ajouter une catégorie
-            </button>
           </div>
 
-          <div className="border border-border rounded p-4">
-            {renderCategoryTree(cats)}
-          </div>
+          <button onClick={openAddMainCategory} className="text-link text-sm hover:underline mb-4 block">
+            add main category
+          </button>
+
+          {renderCategoryTree(cats)}
+
+          {/* Category Form Modal */}
+          {showCatForm && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+              <div className="bg-background border border-border rounded w-full max-w-md">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                  <h3 className="font-semibold text-foreground">
+                    {editingCat ? "Modifier la catégorie" : catFormParentId ? "Ajouter une sous-catégorie" : "Ajouter une catégorie principale"}
+                  </h3>
+                  <button onClick={() => setShowCatForm(false)} className="p-1 hover:bg-muted rounded">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <form onSubmit={handleSaveCategory} className="p-5 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-label mb-1">Nom <span className="text-destructive">*</span></label>
+                    <input required value={catFormName} onChange={e => setCatFormName(e.target.value)}
+                      className="w-full border border-input px-3 py-2 text-sm rounded" />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setShowCatForm(false)}
+                      className="px-4 py-2 text-sm border border-input rounded hover:bg-muted">Annuler</button>
+                    <button type="submit"
+                      className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:opacity-90">
+                      {editingCat ? "Enregistrer" : "Ajouter"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </>
       )}
 
-      {/* Book Form Modal */}
+      {/* Book Form Modal — AdminForm style */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-background border border-border rounded w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-background border border-border rounded w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h3 className="font-semibold text-foreground">{editingBook ? "Modifier le livre" : "Ajouter un livre"}</h3>
               <button onClick={() => setShowForm(false)} className="p-1 hover:bg-muted rounded">
@@ -260,36 +318,119 @@ const AdminDashboard = () => {
               </button>
             </div>
             <form onSubmit={handleSave} className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-label mb-1">Titre <span className="text-destructive">*</span></label>
-                <input required value={formTitle} onChange={e => setFormTitle(e.target.value)}
-                  className="w-full border border-input px-3 py-2 text-sm rounded" />
+              {/* Name */}
+              <div className="flex items-center gap-4">
+                <label className="w-32 text-right text-label text-sm font-medium shrink-0">
+                  Name<span className="text-destructive">*</span>
+                </label>
+                <input required value={formName} onChange={e => setFormName(e.target.value)}
+                  className="flex-1 border border-input px-2 py-1 text-sm" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-label mb-1">Description</label>
-                <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)}
-                  className="w-full border border-input px-3 py-2 text-sm rounded h-24 resize-y" />
+
+              {/* Source */}
+              <div className="flex items-center gap-4">
+                <label className="w-32 text-right text-label text-sm font-medium shrink-0">Source</label>
+                <input value={formSource} onChange={e => setFormSource(e.target.value)}
+                  className="flex-1 border border-input px-2 py-1 text-sm" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-label mb-1">Auteurs</label>
-                <input value={formAuthors} onChange={e => setFormAuthors(e.target.value)}
-                  className="w-full border border-input px-3 py-2 text-sm rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-label mb-1">URL</label>
-                <input value={formUrl} onChange={e => setFormUrl(e.target.value)}
-                  className="w-full border border-input px-3 py-2 text-sm rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-label mb-1">Catégorie</label>
+
+              {/* Catégorie */}
+              <div className="flex items-center gap-4">
+                <label className="w-32 text-right text-label text-sm font-medium shrink-0">Catégorie</label>
                 <select value={formCategoryId} onChange={e => setFormCategoryId(e.target.value)}
-                  className="w-full border border-input px-3 py-2 text-sm rounded">
+                  className="flex-1 border border-input px-2 py-1 text-sm">
                   <option value="">— Sélectionner —</option>
                   {flattenCategories(cats).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
+
+              {/* Content Section */}
+              <div className="border-t border-border pt-4">
+                <button type="button" onClick={() => setContentExpanded(!contentExpanded)}
+                  className="flex items-center gap-1 text-breadcrumb font-medium text-sm mb-4 hover:underline">
+                  {contentExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  Content
+                </button>
+
+                {contentExpanded && (
+                  <div className="space-y-4">
+                    {/* Link Titel */}
+                    <div className="flex items-center gap-4">
+                      <label className="w-32 text-right text-label text-sm font-medium shrink-0">Link Titel</label>
+                      <input value={formLinkTitle} onChange={e => setFormLinkTitle(e.target.value)}
+                        className="flex-1 border border-input px-2 py-1 text-sm" />
+                    </div>
+
+                    {/* Link */}
+                    <div className="flex items-center gap-4">
+                      <label className="w-32 text-right text-label text-sm font-medium shrink-0">Link</label>
+                      <input value={formLink} onChange={e => setFormLink(e.target.value)}
+                        className="flex-1 border border-input px-2 py-1 text-sm" />
+                    </div>
+
+                    {/* File */}
+                    <div className="flex items-start gap-4">
+                      <label className="w-32 text-right text-label text-sm font-medium pt-1 shrink-0">File</label>
+                      <div className="flex-1">
+                        <p className="text-xs text-link text-right mb-1">
+                          Maximum size for new files: Unlimited, maximum attachments: 1
+                        </p>
+                        <div className="border border-input">
+                          <div className="flex items-center justify-between bg-secondary px-2 py-1 border-b border-input">
+                            <button type="button" className="text-muted-foreground"><Image className="w-4 h-4" /></button>
+                            <div className="flex gap-1">
+                              <button type="button" className="p-1 border border-input bg-background text-xs">⊞</button>
+                              <button type="button" className="p-1 border border-input bg-background text-xs">☰</button>
+                              <button type="button" className="p-1 border border-input bg-background text-xs">≡</button>
+                            </div>
+                          </div>
+                          <div className="px-2 py-1 text-sm text-link flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3" /> 📁 Files
+                          </div>
+                          <div className="border-2 border-dashed border-input m-2 p-8 flex flex-col items-center justify-center text-center">
+                            <ArrowDown className="w-10 h-10 text-primary mb-2" />
+                            <p className="text-sm text-muted-foreground">You can drag and drop files here to add them.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content editor */}
+                    <div className="flex items-start gap-4">
+                      <label className="w-32 text-right text-label text-sm font-medium pt-1 shrink-0">Content</label>
+                      <div className="flex-1">
+                        <div className="border border-input">
+                          <div className="flex items-center gap-1 bg-secondary px-2 py-1 border-b border-input">
+                            <button type="button" className="p-1 hover:bg-muted"><Table className="w-4 h-4" /></button>
+                            <select className="text-xs border border-input px-1 py-0.5">
+                              <option>A1</option><option>A2</option><option>A3</option>
+                            </select>
+                            <button type="button" className="p-1 hover:bg-muted font-bold text-sm">B</button>
+                            <button type="button" className="p-1 hover:bg-muted italic text-sm">I</button>
+                            <button type="button" className="p-1 hover:bg-muted"><List className="w-4 h-4" /></button>
+                            <button type="button" className="p-1 hover:bg-muted"><ListOrdered className="w-4 h-4" /></button>
+                            <button type="button" className="p-1 hover:bg-muted"><Link className="w-4 h-4" /></button>
+                            <button type="button" className="p-1 hover:bg-muted"><Unlink className="w-4 h-4" /></button>
+                            <button type="button" className="p-1 hover:bg-muted"><Image className="w-4 h-4" /></button>
+                          </div>
+                          <textarea value={formContent} onChange={e => setFormContent(e.target.value)}
+                            className="w-full h-48 p-2 text-sm resize-y outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Authors */}
+              <div className="flex items-center gap-4">
+                <label className="w-32 text-right text-label text-sm font-medium shrink-0">Authors</label>
+                <input value={formAuthors} onChange={e => setFormAuthors(e.target.value)}
+                  className="flex-1 border border-input px-2 py-1 text-sm" />
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowForm(false)}
                   className="px-4 py-2 text-sm border border-input rounded hover:bg-muted">Annuler</button>
@@ -315,12 +456,12 @@ const AdminDashboard = () => {
             </div>
             <div className="p-5 space-y-3 text-sm">
               <div><span className="font-medium text-label">Titre :</span> <span className="text-foreground">{viewingBook.title}</span></div>
-              <div><span className="font-medium text-label">Description :</span> <span className="text-foreground">{viewingBook.description || "—"}</span></div>
+              <div><span className="font-medium text-label">Source :</span> <span className="text-foreground">{viewingBook.source || "—"}</span></div>
               <div><span className="font-medium text-label">Auteurs :</span> <span className="text-foreground">{viewingBook.authors || "—"}</span></div>
               <div><span className="font-medium text-label">Catégorie :</span> <span className="text-foreground">{getCategoryName(viewingBook.categoryId)}</span></div>
               <div>
-                <span className="font-medium text-label">URL :</span>{" "}
-                <a href={viewingBook.url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">{viewingBook.url}</a>
+                <span className="font-medium text-label">Link :</span>{" "}
+                <a href={viewingBook.url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">{viewingBook.url || "—"}</a>
               </div>
             </div>
             <div className="flex justify-end px-5 py-4 border-t border-border">

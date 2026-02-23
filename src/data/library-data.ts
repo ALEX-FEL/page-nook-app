@@ -8,10 +8,13 @@ export interface Category {
 export interface LibraryItem {
   id: string;
   title: string;
-  description: string;
-  authors: string;
+  source: string;
+  linkTitle: string;
   url: string;
+  content: string;
+  authors: string;
   categoryId: string;
+  description: string;
 }
 
 export const categories: Category[] = [
@@ -49,49 +52,67 @@ export const libraryItems: LibraryItem[] = [
   {
     id: "1",
     title: "2006-06-23/24: Olympiadeleiter & Statut",
+    source: "",
+    linkTitle: "",
     description: "Conspectus praesidum foederatorum & Regulae Hilarienses vom 23./24.6.2006.",
     authors: "",
     url: "http://www.eduhi.at/go/loading.php?id=189990",
+    content: "",
     categoryId: "bundesolympiaden",
   },
   {
     id: "2",
     title: "2006-06-23/24: (Brau-)Meister",
+    source: "",
+    linkTitle: "",
     description: "",
     authors: "",
     url: "http://www.eduhi.at/go/loading.php?id=190221",
+    content: "",
     categoryId: "bundesolympiaden",
   },
   {
     id: "3",
     title: "2006-06-23/24: Das Team",
+    source: "",
+    linkTitle: "",
     description: "Olympiadeleiter in Wilhering (ziemlich viele)",
     authors: "",
     url: "http://www.eduhi.at/go/loading.php?id=190222",
+    content: "",
     categoryId: "bundesolympiaden",
   },
   {
     id: "4",
     title: "2006-06-23/24: Protokoll der Sitzung in Wilhering",
-    description: "Das Protokoll (4 DINA4-Seiten) wurde von Peter Glatz erstellt und ist auch unter \"Protokolle\" zu finden.",
+    source: "",
+    linkTitle: "",
+    description: "Das Protokoll (4 DINA4-Seiten) wurde von Peter Glatz erstellt.",
     authors: "",
     url: "http://www.schule.at/dl/Olympiadeleiter_Besprechung_Juni06_EF.doc",
+    content: "",
     categoryId: "bundesolympiaden",
   },
   {
     id: "5",
     title: "Lateinische Grammatik - Übersicht",
+    source: "",
+    linkTitle: "",
     description: "Umfassende Übersicht der lateinischen Grammatik für Schüler.",
     authors: "Prof. Dr. Müller",
     url: "http://www.eduhi.at/go/loading.php?id=200001",
+    content: "",
     categoryId: "3kl_langform",
   },
   {
     id: "6",
     title: "Newsletter Ausgabe 1/2006",
+    source: "",
+    linkTitle: "",
     description: "Erste Ausgabe des Newsletters mit aktuellen Informationen.",
     authors: "Redaktion",
     url: "http://www.eduhi.at/go/loading.php?id=300001",
+    content: "",
     categoryId: "newsletter",
   },
 ];
