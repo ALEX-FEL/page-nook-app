@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb";
 import { libraryItems as initialItems, categories as initialCategories, LibraryItem, Category } from "@/data/library-data";
-import { Plus, Pencil, Trash2, Eye, BookOpen, FolderTree, X, ChevronDown, ChevronRight, Table, Bold, Italic, List, ListOrdered, Link, Unlink, Image, ArrowDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, BookOpen, FolderTree, X, ChevronDown, ChevronRight, Table, Bold, Italic, List, ListOrdered, Link, Unlink, Image, ArrowDown, Search, Download } from "lucide-react";
 
 const AdminDashboard = () => {
   const [books, setBooks] = useState<LibraryItem[]>(initialItems);
@@ -10,6 +10,7 @@ const AdminDashboard = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingBook, setEditingBook] = useState<LibraryItem | null>(null);
   const [viewingBook, setViewingBook] = useState<LibraryItem | null>(null);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
 
   // Book form state
   const [formName, setFormName] = useState("");
@@ -79,6 +80,20 @@ const AdminDashboard = () => {
     if (confirm("Supprimer ce livre ?")) {
       setBooks(books.filter(b => b.id !== id));
     }
+  };
+
+  const handlePreview = (url: string) => {
+    setPreviewFile(url);
+  };
+
+  const handleDownload = (url: string, title: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = title;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Category helpers
@@ -235,6 +250,16 @@ const AdminDashboard = () => {
                     <td className="px-4 py-3 text-muted-foreground">{getCategoryName(book.categoryId)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        {book.url && (
+                          <>
+                            <button onClick={() => handlePreview(book.url)} className="p-1.5 hover:bg-muted rounded" title="Prévisualiser">
+                              <Search className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <button onClick={() => handleDownload(book.url, book.title)} className="p-1.5 hover:bg-muted rounded" title="Télécharger">
+                              <Download className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </>
+                        )}
                         <button onClick={() => setViewingBook(book)} className="p-1.5 hover:bg-muted rounded" title="Voir">
                           <Eye className="w-4 h-4 text-muted-foreground" />
                         </button>
@@ -469,6 +494,59 @@ const AdminDashboard = () => {
                 className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:opacity-90">
                 <Pencil className="w-3 h-3" /> Modifier
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-background border border-border rounded w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="font-semibold text-foreground">Prévisualisation du fichier</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownload(previewFile, 'fichier')}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:opacity-90"
+                >
+                  <Download className="w-4 h-4" /> Télécharger
+                </button>
+                <button onClick={() => setPreviewFile(null)} className="p-1 hover:bg-muted rounded">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              {previewFile.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
+                <img src={previewFile} alt="Preview" className="max-w-full h-auto mx-auto" />
+              ) : previewFile.match(/\.(pdf)$/i) ? (
+                <iframe src={previewFile} className="w-full h-full min-h-[600px] border-0" title="PDF Preview" />
+              ) : previewFile.match(/\.(mp4|webm|ogg)$/i) ? (
+                <video controls className="max-w-full h-auto mx-auto">
+                  <source src={previewFile} />
+                  Votre navigateur ne supporte pas la lecture de vidéos.
+                </video>
+              ) : previewFile.match(/\.(mp3|wav|ogg)$/i) ? (
+                <audio controls className="w-full">
+                  <source src={previewFile} />
+                  Votre navigateur ne supporte pas la lecture audio.
+                </audio>
+              ) : previewFile.match(/\.(txt|md|csv)$/i) ? (
+                <iframe src={previewFile} className="w-full h-full min-h-[600px] border border-border rounded" title="Text Preview" />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <p className="text-muted-foreground mb-4">Prévisualisation non disponible pour ce type de fichier.</p>
+                  <a
+                    href={previewFile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:opacity-90"
+                  >
+                    <Download className="w-4 h-4" /> Télécharger le fichier
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
