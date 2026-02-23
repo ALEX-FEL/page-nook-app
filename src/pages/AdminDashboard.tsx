@@ -506,12 +506,12 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h3 className="font-semibold text-foreground">Prévisualisation du fichier</h3>
               <div className="flex items-center gap-2">
-                <button
+                {/* <button
                   onClick={() => handleDownload(previewFile, 'fichier')}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:opacity-90"
                 >
                   <Download className="w-4 h-4" /> Télécharger
-                </button>
+                </button> */}
                 <button onClick={() => setPreviewFile(null)} className="p-1 hover:bg-muted rounded">
                   <X className="w-4 h-4" />
                 </button>
@@ -537,14 +537,14 @@ const AdminDashboard = () => {
               ) : (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
                   <p className="text-muted-foreground mb-4">Prévisualisation non disponible pour ce type de fichier.</p>
-                  <a
+                  {/* <a
                     href={previewFile}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:opacity-90"
                   >
                     <Download className="w-4 h-4" /> Télécharger le fichier
-                  </a>
+                  </a> */}
                 </div>
               )}
             </div>
