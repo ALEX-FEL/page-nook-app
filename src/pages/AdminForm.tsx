@@ -18,7 +18,7 @@ const AdminForm = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-foreground mb-1">Exabis Library</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-1">Library</h1>
       <Breadcrumb />
 
       <div className="flex justify-end mb-4">
