@@ -10,7 +10,7 @@ const Breadcrumb = () => {
 
   if (location.pathname === "/admin") {
     crumbs.push({ label: "Administration", path: "/admin" });
-  } else if (location.pathname === "/categories") {
+  } else if (location.pathname === "/categories" || location.pathname === "/admin/categories") {
     crumbs.push({ label: "Administration", path: "/admin" });
     crumbs.push({ label: "Categories", path: "/categories" });
   }
